@@ -45,7 +45,7 @@ enum Token {
     ClassInstance(String),
     String(String),
     Null,
-    Array(Vec<Token>),
+    Array(usize),
 }
 
 /// Main struct for SLF parsing
@@ -122,13 +122,7 @@ where
             // Example: `22(`
             // Left hand side value: An `Integer` with the number of elements that are part of the `Array`.
             TokenType::Array => match lhs {
-                Some(lhs) => {
-                    let size = lhs.parse::<usize>()?;
-                    let elements = (0..size)
-                        .filter_map(|_| self.scan_token().ok())
-                        .collect::<Vec<_>>();
-                    Token::Array(elements)
-                }
+                Some(lhs) => Token::Array(lhs.parse::<usize>()?),
                 None => bail!("Wrong format"),
             },
         };
