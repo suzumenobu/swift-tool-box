@@ -39,7 +39,7 @@ enum Token {
     Int(u64),
     Double(f64),
     ClassName(String),
-    ClassInstance(usize),
+    ClassInstance(String),
     String(String),
     Null,
     Array(Vec<Token>),
@@ -92,10 +92,11 @@ where
                 Some(lhs) => Token::ClassName(lhs),
                 None => bail!("Wrong format"),
             },
+            // TODO: The following comment is wrong, there could be a string too
             // Example: `2@`
             // Left hand side value: An `Integer` with the index of the `Class name` of the `Class instance`'s type.
             TokenType::ClassInstance => match lhs {
-                Some(lhs) => Token::ClassInstance(lhs.parse::<usize>()?),
+                Some(lhs) => Token::ClassInstance(lhs),
                 None => bail!("Wrong format"),
             },
             // Example: `5"Hello`
@@ -170,6 +171,8 @@ fn main() {
 
     let contents = read_gzipped_file(path).unwrap();
     let mut scanner = Scanner::new(contents);
+
+    scanner.scan_header().unwrap();
 
     let mut counter = 0;
     loop {
