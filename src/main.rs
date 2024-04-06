@@ -72,42 +72,36 @@ where
         let (lhs, token_type) = self.scan_lhs_and_token_type()?;
         log::debug!("Left hand side: {:?}, Token type: {:?}", lhs, token_type);
 
-        let token = match token_type {
-            // Example: `200#`
-            // Left hand side value: An unsigned 64 bits integer.
-            TokenType::Int => match lhs {
-                Some(lhs) => Token::Int(lhs.parse::<u64>()?),
-                None => bail!("Wrong format"),
-            },
-            // Example: `afd021ebae48c141^`
-            // Left hand side value: A little-endian floating point number, encoded in hexadecimal.
-            TokenType::Double => match lhs {
-                Some(lhs) => {
+        let token = match (token_type, lhs) {
+            // No left, nor right hand side value
+            (TokenType::Null, None) => Token::Null,
+            (token_type, Some(lhs)) => match token_type {
+                // Example: `200#`
+                // Left hand side value: An unsigned 64 bits integer.
+                TokenType::Int => Token::Int(lhs.parse::<u64>()?),
+
+                // Example: `afd021ebae48c141^`
+                // Left hand side value: A little-endian floating point number, encoded in hexadecimal.
+                TokenType::Double => {
                     let bytes: [u8; 8] = u64::from_str_radix(&lhs, 16)?.to_le_bytes();
                     let data: f64 = f64::from_le_bytes(bytes);
                     Token::Double(data)
                 }
-                None => bail!("Wrong format"),
-            },
-            // Example: `21%IDEActivityLogSection`
-            // Left hand side value: An `Integer` with the number of characters that are part of the `Class name`.
-            // Right hand side value: The characters that are part of the `Class name`
-            TokenType::ClassName => match lhs {
-                Some(lhs) => Token::ClassName(lhs),
-                None => bail!("Wrong format"),
-            },
-            // TODO: The following comment is wrong, there could be a string too
-            // Example: `2@`
-            // Left hand side value: An `Integer` with the index of the `Class name` of the `Class instance`'s type.
-            TokenType::ClassInstance => match lhs {
-                Some(lhs) => Token::ClassInstance(lhs),
-                None => bail!("Wrong format"),
-            },
-            // Example: `5"Hello`
-            // Left hand side value: An `Integer` with the number of characters that are part of the `String`.
-            // Right hand side value: The characters that are part of the `String`
-            TokenType::String => match lhs {
-                Some(lhs) => {
+
+                // Example: `21%IDEActivityLogSection`
+                // Left hand side value: An `Integer` with the number of characters that are part of the `Class name`.
+                // Right hand side value: The characters that are part of the `Class name`
+                TokenType::ClassName => Token::ClassName(lhs),
+
+                // TODO: The following comment is wrong, there could be a string too
+                // Example: `2@`
+                // Left hand side value: An `Integer` with the index of the `Class name` of the `Class instance`'s type.
+                TokenType::ClassInstance => Token::ClassInstance(lhs),
+
+                // Example: `5"Hello`
+                // Left hand side value: An `Integer` with the number of characters that are part of the `String`.
+                // Right hand side value: The characters that are part of the `String`
+                TokenType::String => {
                     let size = lhs.parse::<usize>()?;
                     let mut buf = vec![0; size];
                     self.contents.read_exact(&mut buf)?;
@@ -115,16 +109,14 @@ where
                     log::debug!("Read string: {:?}", data);
                     Token::String(data)
                 }
-                None => bail!("Wrong format"),
+
+                // Example: `22(`
+                // Left hand side value: An `Integer` with the number of elements that are part of the `Array`.
+                TokenType::Array => Token::Array(lhs.parse::<usize>()?),
+
+                TokenType::Null => bail!("Wrong SLF format. Got Null and some lhs"),
             },
-            // No left, nor right hand side value
-            TokenType::Null => Token::Null,
-            // Example: `22(`
-            // Left hand side value: An `Integer` with the number of elements that are part of the `Array`.
-            TokenType::Array => match lhs {
-                Some(lhs) => Token::Array(lhs.parse::<usize>()?),
-                None => bail!("Wrong format"),
-            },
+            _ => bail!("Wrong token type and lhs combo."),
         };
 
         Ok(token)
