@@ -1,3 +1,6 @@
+/// SLF paser
+/// Documentation for SLF could be found here:
+/// https://github.com/MobileNativeFoundation/XCLogParser/blob/master/docs/Xcactivitylog%20Format.md
 use anyhow::bail;
 use flate2::bufread::GzDecoder;
 use log;
@@ -45,14 +48,15 @@ enum Token {
     Array(Vec<Token>),
 }
 
-struct Scanner<T>
+/// Main struct for SLF parsing
+struct Parser<T>
 where
     T: Read,
 {
     contents: BufReader<T>,
 }
 
-impl<T> Scanner<T>
+impl<T> Parser<T>
 where
     T: Read,
 {
@@ -170,13 +174,13 @@ fn main() {
     let path = "./static/test.xcactivitylog";
 
     let contents = read_gzipped_file(path).unwrap();
-    let mut scanner = Scanner::new(contents);
+    let mut parser = Parser::new(contents);
 
-    scanner.scan_header().unwrap();
+    parser.scan_header().unwrap();
 
     let mut counter = 0;
     loop {
-        let token = scanner.scan_token().unwrap();
+        let token = parser.scan_token().unwrap();
         log::info!("{:?}", token);
         counter += 1;
         println!("{} tokens read", counter);
