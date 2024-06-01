@@ -123,7 +123,14 @@ where
                 // Example: `21%IDEActivityLogSection`
                 // Left hand side value: An `Integer` with the number of characters that are part of the `Class name`.
                 // Right hand side value: The characters that are part of the `Class name`
-                TokenType::ClassName => Token::ClassName(lhs),
+                TokenType::ClassName => {
+                    let size = lhs.parse::<usize>()?;
+                    let mut buf = vec![0; size];
+                    self.contents.read_exact(&mut buf)?;
+                    let data = String::from_utf8(buf)?;
+                    log::debug!("Read string: {:?}", data);
+                    Token::ClassName(data)
+                }
 
                 // TODO: The following comment is wrong, there could be a string too
                 // Example: `2@`
