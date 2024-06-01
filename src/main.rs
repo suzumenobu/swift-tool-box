@@ -2,11 +2,13 @@
 /// Documentation for SLF could be found here:
 /// https://github.com/MobileNativeFoundation/XCLogParser/blob/master/docs/Xcactivitylog%20Format.md
 use anyhow::bail;
-use flate2::bufread::GzDecoder;
+use flate2::read::GzDecoder;
 use log;
 use std::convert::TryFrom;
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Read};
+use std::io::{self, BufReader, Read};
+
+mod export;
 
 #[derive(Debug)]
 enum TokenType {
@@ -46,6 +48,36 @@ enum Token {
     String(String),
     Null,
     Array(usize),
+}
+
+impl ToString for Token {
+    fn to_string(&self) -> String {
+        use Token::*;
+        match self {
+            Int(v) => v.to_string(),
+            Double(v) => v.to_string(),
+            ClassName(v) => v.to_string(),
+            ClassInstance(v) => v.to_string(),
+            String(v) => v.to_string(),
+            Null => "null".to_string(),
+            Array(v) => v.to_string(),
+        }
+    }
+}
+
+impl Token {
+    fn get_type_as_str(&self) -> &str {
+        use Token::*;
+        match self {
+            Int(_) => "int",
+            Double(_) => "double",
+            ClassName(_) => "class_name",
+            ClassInstance(_) => "class_instance",
+            String(_) => "string",
+            Null => "null",
+            Array(_) => "array",
+        }
+    }
 }
 
 /// Main struct for SLF parsing
@@ -146,29 +178,48 @@ where
         self.contents.read_exact(&mut buf)?;
         Ok(())
     }
+
+    fn iter(&mut self) -> ParserIterator<T> {
+        self.scan_header().unwrap();
+        ParserIterator { parser: self }
+    }
+}
+
+struct ParserIterator<'a, T>
+where
+    T: Read,
+{
+    parser: &'a mut Parser<T>,
+}
+
+impl<'a, T> Iterator for ParserIterator<'a, T>
+where
+    T: Read,
+{
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.parser.scan_token() {
+            Ok(t) => Some(t),
+            Err(_) => None,
+        }
+    }
 }
 
 /// Reads a gzipped file
-fn read_gzipped_file(path: &str) -> io::Result<GzDecoder<impl BufRead>> {
-    let file = BufReader::new(File::open(path)?);
+fn read_gzipped_file(path: &str) -> io::Result<GzDecoder<File>> {
+    let file = File::open(path)?;
     Ok(GzDecoder::new(file))
 }
 
 fn main() {
     env_logger::init();
 
-    let path = "./static/test.xcactivitylog";
+    let path = "./static/1.xcactivitylog";
 
     let contents = read_gzipped_file(path).unwrap();
     let mut parser = Parser::new(contents);
 
-    parser.scan_header().unwrap();
-
-    let mut counter = 0;
-    loop {
-        let token = parser.scan_token().unwrap();
-        log::info!("{:?}", token);
-        counter += 1;
-        println!("{} tokens read", counter);
-    }
+    let mut file = File::create("result.csv").unwrap();
+    export::to_csv(parser.iter(), &mut file).unwrap();
 }
