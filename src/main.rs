@@ -213,6 +213,92 @@ where
     }
 }
 
+trait XActivitylogItem<T>
+where
+    T: Iterator<Item = Token>,
+{
+    fn from_tokens(&self, tokens: T, class_position_to_name: &mut Vec<String>);
+}
+
+struct IDEActivityLogSection {
+    section_type: i8,
+    domain_type: String,
+    title: String,
+    signature: String,
+    time_started_recording: f64,
+    time_stopped_recording: f64,
+    sub_sections: Vec<IDEActivityLogSection>,
+    text: String,
+    messages: Vec<IDEActivityLogMessage>,
+    was_cancelled: bool,
+    is_quiet: bool,
+    was_fetched_from_cache: bool,
+    subtitle: String,
+    unique_identifier: String,
+    localized_result_string: String,
+    xcbuild_signature: String,
+    attachments: Vec<IDEActivityLogSectionAttachment>,
+    unknonw: i32,
+}
+
+struct IDEActivityLogMessage {
+    title: String,
+    short_title: String,
+    time_emitted: f32,
+    range_end_in_section_text: u64,
+    range_start_in_section_text: u64,
+    sub_message: Vec<IDEActivityLogMessage>,
+    severity: i32,
+    r#type: String,
+    location: DVTDocumentLocation,
+    category_ident: String,
+    secondary_location: Vec<DVTDocumentLocation>,
+    additional_description: String,
+}
+
+struct IDEActivityLogSectionAttachment {
+    utime: u64,
+    stilsle: u64,
+    max_rss: u64,
+    wc_start_time: u64,
+    wc_duration: u64,
+}
+
+struct IDEActivityLogUnitTestSection {
+    tests_passed_string: String,
+    duration_string: String,
+    summary_string: String,
+    suite_name: String,
+    test_name: String,
+    performance_test_output_string: String,
+}
+
+struct DVTDocumentLocation {
+    document_url_string: String,
+    timestamp: f64,
+}
+
+struct DVTTextDocumentLocation {
+    starting_line_number: u64,
+    starting_column_number: u64,
+    ending_line_number: u64,
+    ending_column_number: u64,
+    character_range_end: u64,
+    character_range_start: u64,
+    location_encoding: u64,
+}
+
+struct IDEActivityLogCommandInvocationSection {}
+
+struct IDEActivityLogMajorGroupSection {}
+
+fn serialize<T>(tokens: T) -> Vec<Box<dyn XActivitylogItem<T>>>
+where
+    T: Iterator<Item = Token>,
+{
+    todo!()
+}
+
 /// Reads a gzipped file
 fn read_gzipped_file(path: &str) -> io::Result<GzDecoder<File>> {
     let file = File::open(path)?;
