@@ -6,6 +6,7 @@ use flate2::read::GzDecoder;
 use log;
 use std::convert::TryFrom;
 use std::fs::File;
+use std::io::Write;
 use std::io::{self, BufReader, Read};
 
 use crate::token::Token;
@@ -191,7 +192,10 @@ fn main() {
     let contents = read_gzipped_file(path).unwrap();
     let mut parser = Parser::new(contents);
 
-    deser::deserialize(&mut parser.iter());
+    let result = deser::deserialize(&mut parser.iter());
+    let json_str = serde_json::to_string_pretty(&result).unwrap();
+    let mut file = File::create("result.json").unwrap();
+    write!(file, "{}", json_str).unwrap();
 
     let mut file = File::create("result.csv").unwrap();
     export::to_csv(parser.iter(), &mut file).unwrap();

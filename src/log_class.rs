@@ -1,4 +1,5 @@
 use crate::token::Token;
+use serde::Serialize;
 
 pub trait XActivityLogClass<T>
 where
@@ -66,7 +67,7 @@ where
     result
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct IDECommandLineBuildLog {
     pub section_type: i8,
     pub domain_type: String,
@@ -124,7 +125,7 @@ where
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct IDEActivityLogSection {
     pub section_type: i8,
     pub domain_type: String,
@@ -239,7 +240,7 @@ where
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize)]
 pub struct IDEActivityLogMessage {
     pub title: String,
     pub short_title: Option<String>,
@@ -320,7 +321,7 @@ where
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize)]
 pub struct IDEActivityLogSectionAttachment {
     pub identifier: String,
     pub major_version: u64,
@@ -358,7 +359,7 @@ where
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize)]
 pub struct IDEActivityLogUnitTestSection {
     pub tests_passed_string: String,
     pub duration_string: String,
@@ -395,7 +396,7 @@ where
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize)]
 pub struct DVTDocumentLocation {
     pub document_url_string: String,
     pub timestamp: f64,
@@ -428,7 +429,7 @@ where
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize)]
 pub struct DVTTextDocumentLocation {
     pub starting_line_number: u64,
     pub starting_column_number: u64,
@@ -465,9 +466,3 @@ where
         7
     }
 }
-
-#[derive(Default, Debug)]
-struct IDEActivityLogCommandInvocationSection {}
-
-#[derive(Default, Debug)]
-struct IDEActivityLogMajorGroupSection {}
