@@ -57,10 +57,14 @@ where
                 class_position_to_name.push(read_token!(tokens).unwrap().to_string())
             }
             Some(Token::ClassInstance(position)) => {
-                let got_class = &class_position_to_name[position - 1];
-                let expected_classes = T::get_possible_class_names();
-                log::debug!("Expected {expected_classes:?} got {got_class}");
-                return Some(T::from_tokens(tokens, class_position_to_name).unwrap());
+                let got_class = class_position_to_name[position - 1].as_str().to_string();
+                return match T::from_tokens(tokens, class_position_to_name) {
+                    Ok(obj) => Some(obj),
+                    Err(e) => {
+                        let msg = format!("Failed to parse {} with {:?}", got_class, e);
+                        panic!("{}", msg);
+                    }
+                };
             }
             Some(Token::Null) | Some(Token::Json(_)) => {
                 tokens.next();
