@@ -120,14 +120,14 @@ where
             "Start parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(read_token!(tokens)?);
-        let section_type = i8::from(read_token!(tokens)?);
-        let domain_type = String::from(read_token!(tokens)?);
-        let title = String::from(read_token!(tokens)?);
-        let signature = String::from(read_token!(tokens)?);
-        let time_started_recording = f64::from(read_token!(tokens)?);
-        let time_stopped_recording = f64::from(read_token!(tokens)?);
-        let sub_sections_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
+        let _class_instance = usize::try_from(read_token!(tokens)?)?;
+        let section_type = i8::try_from(read_token!(tokens)?)?;
+        let domain_type = String::try_from(read_token!(tokens)?)?;
+        let title = String::try_from(read_token!(tokens)?)?;
+        let signature = String::try_from(read_token!(tokens)?)?;
+        let time_started_recording = f64::try_from(read_token!(tokens)?)?;
+        let time_stopped_recording = f64::try_from(read_token!(tokens)?)?;
+        let sub_sections_size = Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let sub_sections = deser_vec(tokens, sub_sections_size, class_position_to_name);
         log::info!(
             "End of parsing {:?}",
@@ -198,32 +198,32 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(read_token!(tokens)?);
-        let section_type = i8::from(read_token!(tokens)?);
-        let domain_type = String::from(read_token!(tokens)?);
-        let title = String::from(read_token!(tokens)?);
-        let signature = String::from(read_token!(tokens)?);
-        let time_started_recording = f64::from(read_token!(tokens)?);
-        let time_stopped_recording = f64::from(read_token!(tokens)?);
-        let sub_sections_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
+        let _class_instance = usize::try_from(read_token!(tokens)?)?;
+        let section_type = i8::try_from(read_token!(tokens)?)?;
+        let domain_type = String::try_from(read_token!(tokens)?)?;
+        let title = String::try_from(read_token!(tokens)?)?;
+        let signature = String::try_from(read_token!(tokens)?)?;
+        let time_started_recording = f64::try_from(read_token!(tokens)?)?;
+        let time_stopped_recording = f64::try_from(read_token!(tokens)?)?;
+        let sub_sections_size = Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let sub_sections = deser_vec(tokens, sub_sections_size, class_position_to_name);
-        let text = Option::<String>::from(read_token!(tokens)?);
-        let messages_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
+        let text = Option::<String>::try_from(read_token!(tokens)?)?;
+        let messages_size = Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let messages = deser_vec(tokens, messages_size, class_position_to_name);
-        let was_cancelled = bool::from(read_token!(tokens)?);
-        let is_quiet = bool::from(read_token!(tokens)?);
-        let was_fetched_from_cache = bool::from(read_token!(tokens)?);
-        let subtitle = Option::<String>::from(read_token!(tokens)?);
+        let was_cancelled = bool::try_from(read_token!(tokens)?)?;
+        let is_quiet = bool::try_from(read_token!(tokens)?)?;
+        let was_fetched_from_cache = bool::try_from(read_token!(tokens)?)?;
+        let subtitle = Option::<String>::try_from(read_token!(tokens)?)?;
         let location = deser_exact::<DVTDocumentLocation, _>(tokens, class_position_to_name);
-        let command_details_spect = Option::<String>::from(read_token!(tokens)?);
-        let unique_identifier = Option::<String>::from(read_token!(tokens)?);
-        let localized_result_string = Option::<String>::from(read_token!(tokens)?);
-        let xcbuild_signature = Option::<String>::from(read_token!(tokens)?);
+        let command_details_spect = Option::<String>::try_from(read_token!(tokens)?)?;
+        let unique_identifier = Option::<String>::try_from(read_token!(tokens)?)?;
+        let localized_result_string = Option::<String>::try_from(read_token!(tokens)?)?;
+        let xcbuild_signature = Option::<String>::try_from(read_token!(tokens)?)?;
         let mut attachments_found = false;
         let attachments_size = match tokens.peek() {
             Some(Token::Array(_)) => {
                 attachments_found = true;
-                Option::<usize>::from(read_token!(tokens)?).unwrap_or(0)
+                Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0)
             }
             _ => 0,
         };
@@ -232,7 +232,7 @@ where
         let unknown = match tokens.peek() {
             Some(Token::Int(_)) | Some(Token::Null) if attachments_found => {
                 unknown_found = true;
-                Option::<u64>::from(read_token!(tokens)?)
+                Option::<u64>::try_from(read_token!(tokens)?)?
             }
             _ => None,
         };
@@ -420,22 +420,23 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(read_token!(tokens)?);
-        let title = String::from(read_token!(tokens)?);
-        let short_title = Option::<String>::from(read_token!(tokens)?);
-        let time_emitted = u64::from(read_token!(tokens)?);
-        let range_end_in_section_text = u64::from(read_token!(tokens)?);
-        let range_start_in_section_text = u64::from(read_token!(tokens)?);
-        let sub_messages_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
+        let _class_instance = usize::try_from(read_token!(tokens)?)?;
+        let title = String::try_from(read_token!(tokens)?)?;
+        let short_title = Option::<String>::try_from(read_token!(tokens)?)?;
+        let time_emitted = u64::try_from(read_token!(tokens)?)?;
+        let range_end_in_section_text = u64::try_from(read_token!(tokens)?)?;
+        let range_start_in_section_text = u64::try_from(read_token!(tokens)?)?;
+        let sub_messages_size = Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let sub_messages = deser_vec(tokens, sub_messages_size, class_position_to_name);
-        let severity = i32::from(read_token!(tokens)?);
-        let r#type = Option::<String>::from(read_token!(tokens)?);
+        let severity = i32::try_from(read_token!(tokens)?)?;
+        let r#type = Option::<String>::try_from(read_token!(tokens)?)?;
         let location = deser_exact::<DVTDocumentLocation, _>(tokens, class_position_to_name);
-        let category_ident = Option::<String>::from(read_token!(tokens)?);
-        let secondary_locations_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
+        let category_ident = Option::<String>::try_from(read_token!(tokens)?)?;
+        let secondary_locations_size =
+            Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let secondary_locations =
             deser_vec(tokens, secondary_locations_size, class_position_to_name);
-        let additional_description = Option::<String>::from(read_token!(tokens)?);
+        let additional_description = Option::<String>::try_from(read_token!(tokens)?)?;
 
         Ok(Self {
             title,
@@ -499,11 +500,11 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<T>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(read_token!(tokens)?);
-        let identifier = String::from(read_token!(tokens)?);
-        let major_version = u64::from(read_token!(tokens)?);
-        let minor_version = u64::from(read_token!(tokens)?);
-        let unknown1 = Value::from(read_token!(tokens)?);
+        let _class_instance = usize::try_from(read_token!(tokens)?)?;
+        let identifier = String::try_from(read_token!(tokens)?)?;
+        let major_version = u64::try_from(read_token!(tokens)?)?;
+        let minor_version = u64::try_from(read_token!(tokens)?)?;
+        let unknown1 = Value::try_from(read_token!(tokens)?)?;
         log::info!(
             "End of parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
@@ -547,7 +548,7 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<T>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(read_token!(tokens)?);
+        let _class_instance = usize::try_from(read_token!(tokens)?)?;
         for _ in 0..6 {
             tokens.next();
         }
@@ -582,11 +583,11 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let class_instance = usize::from(read_token!(tokens)?);
+        let class_instance = usize::try_from(read_token!(tokens)?)?;
         let class_name = &class_position_to_name[class_instance - 1];
 
-        let document_url_string = String::from(read_token!(tokens)?);
-        let timestamp = f64::from(read_token!(tokens)?);
+        let document_url_string = String::try_from(read_token!(tokens)?)?;
+        let timestamp = f64::try_from(read_token!(tokens)?)?;
 
         let base = DVTBaseDocumentLocation {
             document_url_string,
@@ -668,19 +669,19 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(read_token!(tokens)?);
-        let section_type = i8::from(read_token!(tokens)?);
-        let domain_type = String::from(read_token!(tokens)?);
-        let title = String::from(read_token!(tokens)?);
-        let signature = String::from(read_token!(tokens)?);
-        let time_started_recording = f64::from(read_token!(tokens)?);
-        let time_stopped_recording = f64::from(read_token!(tokens)?);
-        let sub_sections_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
+        let _class_instance = usize::try_from(read_token!(tokens)?)?;
+        let section_type = i8::try_from(read_token!(tokens)?)?;
+        let domain_type = String::try_from(read_token!(tokens)?)?;
+        let title = String::try_from(read_token!(tokens)?)?;
+        let signature = String::try_from(read_token!(tokens)?)?;
+        let time_started_recording = f64::try_from(read_token!(tokens)?)?;
+        let time_stopped_recording = f64::try_from(read_token!(tokens)?)?;
+        let sub_sections_size = Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let sub_sections = deser_vec(tokens, sub_sections_size, class_position_to_name);
-        let text = Option::<String>::from(read_token!(tokens)?);
-        let messages_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
+        let text = Option::<String>::try_from(read_token!(tokens)?)?;
+        let messages_size = Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let messages = deser_vec(tokens, messages_size, class_position_to_name);
-        let was_cancelled = bool::from(read_token!(tokens)?);
+        let was_cancelled = bool::try_from(read_token!(tokens)?)?;
 
         Ok(Self {
             section_type,

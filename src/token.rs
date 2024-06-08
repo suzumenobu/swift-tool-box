@@ -1,4 +1,8 @@
-#[derive(Debug)]
+use serde_json::Value;
+use std::error::Error;
+use std::fmt;
+
+#[derive(Debug, Clone)]
 pub enum Token {
     Int(u64),
     Double(f64),
@@ -42,128 +46,257 @@ impl ToString for Token {
     }
 }
 
-impl From<Token> for u64 {
-    fn from(value: Token) -> Self {
+#[derive(Debug)]
+pub struct ConversionError {
+    from: &'static str,
+    to: &'static str,
+    value: String,
+}
+
+impl fmt::Display for ConversionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Cannot convert from {} to {}: value was {}",
+            self.from, self.to, self.value
+        )
+    }
+}
+
+impl Error for ConversionError {}
+
+impl TryFrom<Token> for u64 {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Int(v) => v,
-            v => panic!("Cannot convert {v:?} to u64"),
+            Token::Int(v) => Ok(v),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "u64",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for f64 {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for f64 {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Double(v) => v,
-            other => panic!("Cannot convert {other:?} to f64"),
+            Token::Double(v) => Ok(v),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "f64",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for String {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for String {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::String(v) => v,
-            other => panic!("Cannot convert {other:?} to String"),
+            Token::String(v) => Ok(v),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "String",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for bool {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for bool {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Int(v) => v != 0,
-            v => panic!("Cannot convert {v:?} to bool"),
+            Token::Int(v) => Ok(v != 0),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "bool",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for usize {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for usize {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Array(v) | Token::ClassInstance(v) => v,
-            v => panic!("Cannot convert {v:?} to usize"),
+            Token::Array(v) | Token::ClassInstance(v) => Ok(v),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "usize",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for i32 {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for i32 {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Int(v) => v as i32,
-            v => panic!("Cannot convert {v:?} to i32"),
+            Token::Int(v) => Ok(v as i32),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "i32",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for i8 {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for i8 {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Int(v) => v as i8,
-            v => panic!("Cannot convert {v:?} to i8"),
+            Token::Int(v) => Ok(v as i8),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "i8",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for Option<u64> {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for Value {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Int(v) => Some(v),
-            _ => None,
+            Token::Json(ref s) => serde_json::from_str(s).map_err(|err| ConversionError {
+                from: "Token",
+                to: "Value",
+                value: format!("{:?}", value.clone()),
+            }),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "Value",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for Option<f64> {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for Option<u64> {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Double(v) => Some(v),
-            _ => None,
+            Token::Int(v) => Ok(Some(v)),
+            Token::Null => Ok(None),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "Option<u64>",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for Option<String> {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for Option<f64> {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::String(v) => Some(v),
-            _ => None,
+            Token::Double(v) => Ok(Some(v)),
+            Token::Null => Ok(None),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "Option<f64>",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for Option<bool> {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for Option<String> {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Int(v) => Some(v != 0),
-            _ => None,
+            Token::String(v) => Ok(Some(v)),
+            Token::Null => Ok(None),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "Option<String>",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for Option<usize> {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for Option<bool> {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Array(v) => Some(v),
-            _ => None,
+            Token::Int(v) => Ok(Some(v != 0)),
+            Token::Null => Ok(None),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "Option<bool>",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for Option<i32> {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for Option<usize> {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Int(v) => Some(v as i32),
-            _ => None,
+            Token::Array(v) => Ok(Some(v)),
+            Token::Null => Ok(None),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "Option<usize>",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
 
-impl From<Token> for Option<i8> {
-    fn from(value: Token) -> Self {
+impl TryFrom<Token> for Option<i32> {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Int(v) => Some(v as i8),
-            _ => None,
+            Token::Int(v) => Ok(Some(v as i32)),
+            Token::Null => Ok(None),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "Option<i32>",
+                value: format!("{:?}", other),
+            }),
+        }
+    }
+}
+
+impl TryFrom<Token> for Option<i8> {
+    type Error = ConversionError;
+
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
+        match value {
+            Token::Int(v) => Ok(Some(v as i8)),
+            Token::Null => Ok(None),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "Option<i8>",
+                value: format!("{:?}", other),
+            }),
         }
     }
 }
