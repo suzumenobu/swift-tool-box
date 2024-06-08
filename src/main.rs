@@ -25,6 +25,7 @@ enum TokenType {
     String,
     Null,
     Array,
+    Json,
 }
 
 impl TryFrom<char> for TokenType {
@@ -40,6 +41,7 @@ impl TryFrom<char> for TokenType {
             '(' => Array,
             '%' => ClassName,
             '@' => ClassInstance,
+            '*' => Json,
             _ => bail!("Unknown char: {}", value),
         })
     }
@@ -121,6 +123,13 @@ where
                 // Example: `22(`
                 // Left hand side value: An `Integer` with the number of elements that are part of the `Array`.
                 TokenType::Array => Token::Array(lhs.parse::<usize>()?),
+                TokenType::Json => {
+                    let size = lhs.parse::<usize>()?;
+                    let mut buf = vec![0; size];
+                    self.contents.read_exact(&mut buf)?;
+                    let data = String::from_utf8(buf)?;
+                    Token::Json(data)
+                }
 
                 TokenType::Null => bail!("Wrong SLF format. Got Null and some lhs"),
             },
@@ -206,11 +215,11 @@ fn main() {
     let contents = read_gzipped_file(path).unwrap();
     let mut parser = Parser::new(contents);
 
-    // let result = deser::deserialize(&mut parser.iter().peekable());
-    // let json_str = serde_json::to_string_pretty(&result).unwrap();
-    // let mut file = File::create("result.json").unwrap();
-    // write!(file, "{}", json_str).unwrap();
+    let result = deser::deserialize(&mut parser.iter().peekable());
+    let json_str = serde_json::to_string_pretty(&result).unwrap();
+    let mut file = File::create("result.json").unwrap();
+    write!(file, "{}", json_str).unwrap();
 
-    let mut file = File::create("result.csv").unwrap();
-    export::to_csv(parser.iter(), &mut file).unwrap();
+    // let mut file = File::create("result.csv").unwrap();
+    // export::to_csv(parser.iter(), &mut file).unwrap();
 }

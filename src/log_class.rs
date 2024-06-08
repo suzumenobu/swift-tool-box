@@ -43,7 +43,7 @@ where
                 // );
                 return Some(T::from_tokens(tokens, class_position_to_name).unwrap());
             }
-            Some(Token::Null) => {
+            Some(Token::Null) | Some(Token::Json(_)) => {
                 tokens.next();
                 return None;
             }

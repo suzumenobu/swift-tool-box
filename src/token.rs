@@ -7,6 +7,7 @@ pub enum Token {
     String(String),
     Null,
     Array(usize),
+    Json(String),
 }
 
 impl Token {
@@ -20,6 +21,7 @@ impl Token {
             String(_) => "string",
             Null => "null",
             Array(_) => "array",
+            Json(_) => "json",
         }
     }
 }
@@ -35,6 +37,7 @@ impl ToString for Token {
             String(v) => v.to_string(),
             Null => "null".to_string(),
             Array(v) => v.to_string(),
+            Json(v) => v.to_string(),
         }
     }
 }

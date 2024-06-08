@@ -12,7 +12,6 @@ pub enum XActivityLogObject {
     IDEActivityLogSectionAttachment(IDEActivityLogSectionAttachment),
     IDEActivityLogUnitTestSection(IDEActivityLogUnitTestSection),
     DVTDocumentLocation(DVTDocumentLocation),
-    DVTTextDocumentLocation(DVTTextDocumentLocation),
     IDEActivityLogCommandInvocationSection(IDEActivityLogCommandInvocationSection),
 }
 
