@@ -44,10 +44,12 @@ where
                             .unwrap(),
                         )
                     }
-                    "IDEActivityLogMessage" => XActivityLogObject::IDEActivityLogMessage(
-                        IDEActivityLogMessage::from_tokens(tokens, &mut class_position_to_name)
-                            .unwrap(),
-                    ),
+                    "IDEActivityLogMessage" | "IDEDiagnosticActivityLogMessage" => {
+                        XActivityLogObject::IDEActivityLogMessage(
+                            IDEActivityLogMessage::from_tokens(tokens, &mut class_position_to_name)
+                                .unwrap(),
+                        )
+                    }
                     "IDEActivityLogSectionAttachment" => {
                         XActivityLogObject::IDEActivityLogSectionAttachment(
                             IDEActivityLogSectionAttachment::from_tokens(
