@@ -237,87 +237,6 @@ where
             _ => None,
         };
 
-        // let mut unknown1_found = false;
-        // let unknown1 = match tokens.peek() {
-        //     Some(Token::Int(_)) | Some(Token::Null) if unknown_found => {
-        //         unknown1_found = true;
-        //         bool::from(read_token!(tokens)?)
-        //     }
-        //     _ => false,
-        // };
-
-        // let mut unknown2_found = false;
-        // let unknown2 = match tokens.peek() {
-        //     Some(Token::Int(_)) | Some(Token::Null) if unknown1_found => {
-        //         unknown2_found = true;
-        //         bool::from(read_token!(tokens)?)
-        //     }
-        //     _ => false,
-        // };
-
-        // let mut unknown3_found = false;
-        // let unknown3 = match tokens.peek() {
-        //     Some(Token::Int(_)) | Some(Token::Null) if unknown2_found => {
-        //         unknown3_found = true;
-        //         bool::from(read_token!(tokens)?)
-        //     }
-        //     _ => false,
-        // };
-
-        // let mut unknown4_found = false;
-        // let unknown4 = match tokens.peek() {
-        //     Some(Token::String(_)) | Some(Token::Null) if unknown3_found => {
-        //         unknown4_found = true;
-        //         Option::<String>::from(read_token!(tokens)?)
-        //     }
-        //     _ => None,
-        // };
-
-        // let mut unknown5_found = false;
-        // let unknown5 = match tokens.peek() {
-        //     Some(Token::Int(_)) | Some(Token::Null) if unknown4_found => {
-        //         unknown5_found = true;
-        //         Option::<u64>::from(read_token!(tokens)?)
-        //     }
-        //     _ => None,
-        // };
-
-        // let mut unknown6_found = false;
-        // let unknown6 = match tokens.peek() {
-        //     Some(Token::Int(_)) | Some(Token::Null) if unknown5_found => {
-        //         unknown6_found = true;
-        //         Option::<u64>::from(read_token!(tokens)?)
-        //     }
-        //     _ => None,
-        // };
-
-        // let mut unknown7_found = false;
-        // let unknown7 = match tokens.peek() {
-        //     Some(Token::String(_)) | Some(Token::Null) if unknown6_found => {
-        //         unknown7_found = true;
-        //         Option::<String>::from(read_token!(tokens)?)
-        //     }
-        //     _ => None,
-        // };
-
-        // let mut unknown8_found = false;
-        // let unknown8 = match tokens.peek() {
-        //     Some(Token::Int(_)) | Some(Token::Null) if unknown7_found => {
-        //         unknown8_found = true;
-        //         Option::<u64>::from(read_token!(tokens)?)
-        //     }
-        //     _ => None,
-        // };
-
-        // let mut _unknown9_found = false;
-        // let unknown9 = match tokens.peek() {
-        //     Some(Token::Int(_)) | Some(Token::Null) if unknown8_found => {
-        //         _unknown9_found = true;
-        //         Option::<u64>::from(read_token!(tokens)?)
-        //     }
-        //     _ => None,
-        // };
-
         Ok(Self {
             section_type,
             domain_type,
@@ -339,15 +258,6 @@ where
             xcbuild_signature,
             attachments,
             unknown,
-            // unknown1,
-            // unknown2,
-            // unknown3,
-            // unknown4,
-            // unknown5,
-            // unknown6,
-            // unknown7,
-            // unknown8,
-            // unknown9,
         })
     }
 
