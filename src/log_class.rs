@@ -2,6 +2,32 @@ use std::iter::Peekable;
 
 use crate::token::Token;
 use serde::Serialize;
+use serde_json::Value;
+use std::error::Error;
+use std::fmt;
+
+// Define a custom error type
+#[derive(Debug)]
+struct NoMoreTokensError;
+
+// Implement the Display trait for the custom error type
+impl fmt::Display for NoMoreTokensError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "No more tokens")
+    }
+}
+
+// Implement the Error trait for the custom error type
+impl Error for NoMoreTokensError {}
+
+macro_rules! read_token {
+    ($iter:expr) => {
+        match $iter.next() {
+            Some(val) => Ok(val),
+            None => Err(NoMoreTokensError),
+        }
+    };
+}
 
 pub trait XActivityLogClass<T>
 where
@@ -28,19 +54,12 @@ where
     loop {
         match tokens.peek() {
             Some(Token::ClassName(_)) => {
-                class_position_to_name.push(tokens.next().unwrap().to_string())
+                class_position_to_name.push(read_token!(tokens).unwrap().to_string())
             }
             Some(Token::ClassInstance(position)) => {
                 let got_class = &class_position_to_name[position - 1];
                 let expected_classes = T::get_possible_class_names();
                 log::debug!("Expected {expected_classes:?} got {got_class}");
-                // assert!(
-                //     T::get_possible_class_names()
-                //         .contains(&class_position_to_name[position - 1].as_str()),
-                //     "Expected {:?} got {}",
-                //     T::get_possible_class_names(),
-                //     class_position_to_name[position - 1],
-                // );
                 return Some(T::from_tokens(tokens, class_position_to_name).unwrap());
             }
             Some(Token::Null) | Some(Token::Json(_)) => {
@@ -66,8 +85,9 @@ where
     let mut result = Vec::with_capacity(capacity);
     for i in 0..capacity {
         log::debug!(
-            "[{:?}] Parsing {i} of {capacity}",
-            T::get_possible_class_names()
+            "[{:?}] Start parsing {} of {capacity}",
+            T::get_possible_class_names(),
+            i + 1,
         );
         match deser_exact::<T, _>(tokens, class_position_to_name) {
             Some(t) => result.push(t),
@@ -97,18 +117,22 @@ where
         class_position_to_name: &mut Vec<String>,
     ) -> anyhow::Result<Self> {
         log::info!(
-            "Parsing {:?}",
+            "Start parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(tokens.next().unwrap());
-        let section_type = i8::from(tokens.next().unwrap());
-        let domain_type = String::from(tokens.next().unwrap());
-        let title = String::from(tokens.next().unwrap());
-        let signature = String::from(tokens.next().unwrap());
-        let time_started_recording = f64::from(tokens.next().unwrap());
-        let time_stopped_recording = f64::from(tokens.next().unwrap());
-        let sub_sections_size = Option::<usize>::from(tokens.next().unwrap()).unwrap_or(0);
+        let _class_instance = usize::from(read_token!(tokens)?);
+        let section_type = i8::from(read_token!(tokens)?);
+        let domain_type = String::from(read_token!(tokens)?);
+        let title = String::from(read_token!(tokens)?);
+        let signature = String::from(read_token!(tokens)?);
+        let time_started_recording = f64::from(read_token!(tokens)?);
+        let time_stopped_recording = f64::from(read_token!(tokens)?);
+        let sub_sections_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
         let sub_sections = deser_vec(tokens, sub_sections_size, class_position_to_name);
+        log::info!(
+            "End of parsing {:?}",
+            <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
+        );
 
         Ok(Self {
             section_type,
@@ -160,15 +184,6 @@ pub struct IDEActivityLogSection {
     pub xcbuild_signature: Option<String>,
     pub attachments: Vec<IDEActivityLogSectionAttachment>,
     pub unknown: Option<u64>,
-    pub unknown1: bool,
-    pub unknown2: bool,
-    pub unknown3: bool,
-    pub unknown4: Option<String>,
-    pub unknown5: Option<u64>,
-    pub unknown6: Option<u64>,
-    pub unknown7: Option<String>,
-    pub unknown8: Option<u64>,
-    pub unknown9: Option<u64>,
 }
 
 impl<T> XActivityLogClass<Peekable<T>> for IDEActivityLogSection
@@ -183,32 +198,32 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(tokens.next().unwrap());
-        let section_type = i8::from(tokens.next().unwrap());
-        let domain_type = String::from(tokens.next().unwrap());
-        let title = String::from(tokens.next().unwrap());
-        let signature = String::from(tokens.next().unwrap());
-        let time_started_recording = f64::from(tokens.next().unwrap());
-        let time_stopped_recording = f64::from(tokens.next().unwrap());
-        let sub_sections_size = Option::<usize>::from(tokens.next().unwrap()).unwrap_or(0);
+        let _class_instance = usize::from(read_token!(tokens)?);
+        let section_type = i8::from(read_token!(tokens)?);
+        let domain_type = String::from(read_token!(tokens)?);
+        let title = String::from(read_token!(tokens)?);
+        let signature = String::from(read_token!(tokens)?);
+        let time_started_recording = f64::from(read_token!(tokens)?);
+        let time_stopped_recording = f64::from(read_token!(tokens)?);
+        let sub_sections_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
         let sub_sections = deser_vec(tokens, sub_sections_size, class_position_to_name);
-        let text = Option::<String>::from(tokens.next().unwrap());
-        let messages_size = Option::<usize>::from(tokens.next().unwrap()).unwrap_or(0);
+        let text = Option::<String>::from(read_token!(tokens)?);
+        let messages_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
         let messages = deser_vec(tokens, messages_size, class_position_to_name);
-        let was_cancelled = bool::from(tokens.next().unwrap());
-        let is_quiet = bool::from(tokens.next().unwrap());
-        let was_fetched_from_cache = bool::from(tokens.next().unwrap());
-        let subtitle = Option::<String>::from(tokens.next().unwrap());
+        let was_cancelled = bool::from(read_token!(tokens)?);
+        let is_quiet = bool::from(read_token!(tokens)?);
+        let was_fetched_from_cache = bool::from(read_token!(tokens)?);
+        let subtitle = Option::<String>::from(read_token!(tokens)?);
         let location = deser_exact::<DVTDocumentLocation, _>(tokens, class_position_to_name);
-        let command_details_spect = Option::<String>::from(tokens.next().unwrap());
-        let unique_identifier = Option::<String>::from(tokens.next().unwrap());
-        let localized_result_string = Option::<String>::from(tokens.next().unwrap());
-        let xcbuild_signature = Option::<String>::from(tokens.next().unwrap());
+        let command_details_spect = Option::<String>::from(read_token!(tokens)?);
+        let unique_identifier = Option::<String>::from(read_token!(tokens)?);
+        let localized_result_string = Option::<String>::from(read_token!(tokens)?);
+        let xcbuild_signature = Option::<String>::from(read_token!(tokens)?);
         let mut attachments_found = false;
         let attachments_size = match tokens.peek() {
             Some(Token::Array(_)) => {
                 attachments_found = true;
-                Option::<usize>::from(tokens.next().unwrap()).unwrap_or(0)
+                Option::<usize>::from(read_token!(tokens)?).unwrap_or(0)
             }
             _ => 0,
         };
@@ -217,91 +232,91 @@ where
         let unknown = match tokens.peek() {
             Some(Token::Int(_)) | Some(Token::Null) if attachments_found => {
                 unknown_found = true;
-                Option::<u64>::from(tokens.next().unwrap())
+                Option::<u64>::from(read_token!(tokens)?)
             }
             _ => None,
         };
 
-        let mut unknown1_found = false;
-        let unknown1 = match tokens.peek() {
-            Some(Token::Int(_)) | Some(Token::Null) if unknown_found => {
-                unknown1_found = true;
-                bool::from(tokens.next().unwrap())
-            }
-            _ => false,
-        };
+        // let mut unknown1_found = false;
+        // let unknown1 = match tokens.peek() {
+        //     Some(Token::Int(_)) | Some(Token::Null) if unknown_found => {
+        //         unknown1_found = true;
+        //         bool::from(read_token!(tokens)?)
+        //     }
+        //     _ => false,
+        // };
 
-        let mut unknown2_found = false;
-        let unknown2 = match tokens.peek() {
-            Some(Token::Int(_)) | Some(Token::Null) if unknown1_found => {
-                unknown2_found = true;
-                bool::from(tokens.next().unwrap())
-            }
-            _ => false,
-        };
+        // let mut unknown2_found = false;
+        // let unknown2 = match tokens.peek() {
+        //     Some(Token::Int(_)) | Some(Token::Null) if unknown1_found => {
+        //         unknown2_found = true;
+        //         bool::from(read_token!(tokens)?)
+        //     }
+        //     _ => false,
+        // };
 
-        let mut unknown3_found = false;
-        let unknown3 = match tokens.peek() {
-            Some(Token::Int(_)) | Some(Token::Null) if unknown2_found => {
-                unknown3_found = true;
-                bool::from(tokens.next().unwrap())
-            }
-            _ => false,
-        };
+        // let mut unknown3_found = false;
+        // let unknown3 = match tokens.peek() {
+        //     Some(Token::Int(_)) | Some(Token::Null) if unknown2_found => {
+        //         unknown3_found = true;
+        //         bool::from(read_token!(tokens)?)
+        //     }
+        //     _ => false,
+        // };
 
-        let mut unknown4_found = false;
-        let unknown4 = match tokens.peek() {
-            Some(Token::String(_)) | Some(Token::Null) if unknown3_found => {
-                unknown4_found = true;
-                Option::<String>::from(tokens.next().unwrap())
-            }
-            _ => None,
-        };
+        // let mut unknown4_found = false;
+        // let unknown4 = match tokens.peek() {
+        //     Some(Token::String(_)) | Some(Token::Null) if unknown3_found => {
+        //         unknown4_found = true;
+        //         Option::<String>::from(read_token!(tokens)?)
+        //     }
+        //     _ => None,
+        // };
 
-        let mut unknown5_found = false;
-        let unknown5 = match tokens.peek() {
-            Some(Token::Int(_)) | Some(Token::Null) if unknown4_found => {
-                unknown5_found = true;
-                Option::<u64>::from(tokens.next().unwrap())
-            }
-            _ => None,
-        };
+        // let mut unknown5_found = false;
+        // let unknown5 = match tokens.peek() {
+        //     Some(Token::Int(_)) | Some(Token::Null) if unknown4_found => {
+        //         unknown5_found = true;
+        //         Option::<u64>::from(read_token!(tokens)?)
+        //     }
+        //     _ => None,
+        // };
 
-        let mut unknown6_found = false;
-        let unknown6 = match tokens.peek() {
-            Some(Token::Int(_)) | Some(Token::Null) if unknown5_found => {
-                unknown6_found = true;
-                Option::<u64>::from(tokens.next().unwrap())
-            }
-            _ => None,
-        };
+        // let mut unknown6_found = false;
+        // let unknown6 = match tokens.peek() {
+        //     Some(Token::Int(_)) | Some(Token::Null) if unknown5_found => {
+        //         unknown6_found = true;
+        //         Option::<u64>::from(read_token!(tokens)?)
+        //     }
+        //     _ => None,
+        // };
 
-        let mut unknown7_found = false;
-        let unknown7 = match tokens.peek() {
-            Some(Token::String(_)) | Some(Token::Null) if unknown6_found => {
-                unknown7_found = true;
-                Option::<String>::from(tokens.next().unwrap())
-            }
-            _ => None,
-        };
+        // let mut unknown7_found = false;
+        // let unknown7 = match tokens.peek() {
+        //     Some(Token::String(_)) | Some(Token::Null) if unknown6_found => {
+        //         unknown7_found = true;
+        //         Option::<String>::from(read_token!(tokens)?)
+        //     }
+        //     _ => None,
+        // };
 
-        let mut unknown8_found = false;
-        let unknown8 = match tokens.peek() {
-            Some(Token::Int(_)) | Some(Token::Null) if unknown7_found => {
-                unknown8_found = true;
-                Option::<u64>::from(tokens.next().unwrap())
-            }
-            _ => None,
-        };
+        // let mut unknown8_found = false;
+        // let unknown8 = match tokens.peek() {
+        //     Some(Token::Int(_)) | Some(Token::Null) if unknown7_found => {
+        //         unknown8_found = true;
+        //         Option::<u64>::from(read_token!(tokens)?)
+        //     }
+        //     _ => None,
+        // };
 
-        let mut _unknown9_found = false;
-        let unknown9 = match tokens.peek() {
-            Some(Token::Int(_)) | Some(Token::Null) if unknown8_found => {
-                _unknown9_found = true;
-                Option::<u64>::from(tokens.next().unwrap())
-            }
-            _ => None,
-        };
+        // let mut _unknown9_found = false;
+        // let unknown9 = match tokens.peek() {
+        //     Some(Token::Int(_)) | Some(Token::Null) if unknown8_found => {
+        //         _unknown9_found = true;
+        //         Option::<u64>::from(read_token!(tokens)?)
+        //     }
+        //     _ => None,
+        // };
 
         Ok(Self {
             section_type,
@@ -324,15 +339,15 @@ where
             xcbuild_signature,
             attachments,
             unknown,
-            unknown1,
-            unknown2,
-            unknown3,
-            unknown4,
-            unknown5,
-            unknown6,
-            unknown7,
-            unknown8,
-            unknown9,
+            // unknown1,
+            // unknown2,
+            // unknown3,
+            // unknown4,
+            // unknown5,
+            // unknown6,
+            // unknown7,
+            // unknown8,
+            // unknown9,
         })
     }
 
@@ -405,22 +420,22 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(tokens.next().unwrap());
-        let title = String::from(tokens.next().unwrap());
-        let short_title = Option::<String>::from(tokens.next().unwrap());
-        let time_emitted = u64::from(tokens.next().unwrap());
-        let range_end_in_section_text = u64::from(tokens.next().unwrap());
-        let range_start_in_section_text = u64::from(tokens.next().unwrap());
-        let sub_messages_size = Option::<usize>::from(tokens.next().unwrap()).unwrap_or(0);
+        let _class_instance = usize::from(read_token!(tokens)?);
+        let title = String::from(read_token!(tokens)?);
+        let short_title = Option::<String>::from(read_token!(tokens)?);
+        let time_emitted = u64::from(read_token!(tokens)?);
+        let range_end_in_section_text = u64::from(read_token!(tokens)?);
+        let range_start_in_section_text = u64::from(read_token!(tokens)?);
+        let sub_messages_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
         let sub_messages = deser_vec(tokens, sub_messages_size, class_position_to_name);
-        let severity = i32::from(tokens.next().unwrap());
-        let r#type = Option::<String>::from(tokens.next().unwrap());
+        let severity = i32::from(read_token!(tokens)?);
+        let r#type = Option::<String>::from(read_token!(tokens)?);
         let location = deser_exact::<DVTDocumentLocation, _>(tokens, class_position_to_name);
-        let category_ident = Option::<String>::from(tokens.next().unwrap());
-        let secondary_locations_size = Option::<usize>::from(tokens.next().unwrap()).unwrap_or(0);
+        let category_ident = Option::<String>::from(read_token!(tokens)?);
+        let secondary_locations_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
         let secondary_locations =
             deser_vec(tokens, secondary_locations_size, class_position_to_name);
-        let additional_description = Option::<String>::from(tokens.next().unwrap());
+        let additional_description = Option::<String>::from(read_token!(tokens)?);
 
         Ok(Self {
             title,
@@ -469,6 +484,7 @@ pub struct IDEActivityLogSectionAttachment {
     pub identifier: String,
     pub major_version: u64,
     pub minor_version: u64,
+    pub unknown1: Value,
 }
 
 impl<T> XActivityLogClass<T> for IDEActivityLogSectionAttachment
@@ -483,14 +499,20 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<T>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(tokens.next().unwrap());
-        let identifier = String::from(tokens.next().unwrap());
-        let major_version = u64::from(tokens.next().unwrap());
-        let minor_version = u64::from(tokens.next().unwrap());
+        let _class_instance = usize::from(read_token!(tokens)?);
+        let identifier = String::from(read_token!(tokens)?);
+        let major_version = u64::from(read_token!(tokens)?);
+        let minor_version = u64::from(read_token!(tokens)?);
+        let unknown1 = Value::from(read_token!(tokens)?);
+        log::info!(
+            "End of parsing {:?}",
+            <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
+        );
         Ok(Self {
             identifier,
             major_version,
             minor_version,
+            unknown1,
         })
     }
 
@@ -525,7 +547,7 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<T>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(tokens.next().unwrap());
+        let _class_instance = usize::from(read_token!(tokens)?);
         for _ in 0..6 {
             tokens.next();
         }
@@ -560,11 +582,11 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let class_instance = usize::from(tokens.next().unwrap());
+        let class_instance = usize::from(read_token!(tokens)?);
         let class_name = &class_position_to_name[class_instance - 1];
 
-        let document_url_string = String::from(tokens.next().unwrap());
-        let timestamp = f64::from(tokens.next().unwrap());
+        let document_url_string = String::from(read_token!(tokens)?);
+        let timestamp = f64::from(read_token!(tokens)?);
 
         let base = DVTBaseDocumentLocation {
             document_url_string,
@@ -646,19 +668,19 @@ where
             "Parsing {:?}",
             <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
         );
-        let _class_instance = usize::from(tokens.next().unwrap());
-        let section_type = i8::from(tokens.next().unwrap());
-        let domain_type = String::from(tokens.next().unwrap());
-        let title = String::from(tokens.next().unwrap());
-        let signature = String::from(tokens.next().unwrap());
-        let time_started_recording = f64::from(tokens.next().unwrap());
-        let time_stopped_recording = f64::from(tokens.next().unwrap());
-        let sub_sections_size = Option::<usize>::from(tokens.next().unwrap()).unwrap_or(0);
+        let _class_instance = usize::from(read_token!(tokens)?);
+        let section_type = i8::from(read_token!(tokens)?);
+        let domain_type = String::from(read_token!(tokens)?);
+        let title = String::from(read_token!(tokens)?);
+        let signature = String::from(read_token!(tokens)?);
+        let time_started_recording = f64::from(read_token!(tokens)?);
+        let time_stopped_recording = f64::from(read_token!(tokens)?);
+        let sub_sections_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
         let sub_sections = deser_vec(tokens, sub_sections_size, class_position_to_name);
-        let text = Option::<String>::from(tokens.next().unwrap());
-        let messages_size = Option::<usize>::from(tokens.next().unwrap()).unwrap_or(0);
+        let text = Option::<String>::from(read_token!(tokens)?);
+        let messages_size = Option::<usize>::from(read_token!(tokens)?).unwrap_or(0);
         let messages = deser_vec(tokens, messages_size, class_position_to_name);
-        let was_cancelled = bool::from(tokens.next().unwrap());
+        let was_cancelled = bool::from(read_token!(tokens)?);
 
         Ok(Self {
             section_type,
