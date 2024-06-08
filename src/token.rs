@@ -70,7 +70,7 @@ impl From<Token> for bool {
     fn from(value: Token) -> Self {
         match value {
             Token::Int(v) => v != 0,
-            _ => panic!("Cannot convert to bool"),
+            v => panic!("Cannot convert {v:?} to bool"),
         }
     }
 }
@@ -78,8 +78,8 @@ impl From<Token> for bool {
 impl From<Token> for usize {
     fn from(value: Token) -> Self {
         match value {
-            Token::Array(v) => v,
-            _ => panic!("Cannot convert to usize"),
+            Token::Array(v) | Token::ClassInstance(v) => v,
+            v => panic!("Cannot convert {v:?} to usize"),
         }
     }
 }
@@ -88,7 +88,7 @@ impl From<Token> for i32 {
     fn from(value: Token) -> Self {
         match value {
             Token::Int(v) => v as i32,
-            _ => panic!("Cannot convert to i32"),
+            v => panic!("Cannot convert {v:?} to i32"),
         }
     }
 }
