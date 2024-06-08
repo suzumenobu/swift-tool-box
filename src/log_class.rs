@@ -198,11 +198,12 @@ where
         tokens: &mut Peekable<T>,
         class_position_to_name: &mut Vec<String>,
     ) -> anyhow::Result<Self> {
+        let class_instance = usize::try_from(read_token!(tokens)?)?;
         log::info!(
-            "Parsing {:?}",
-            <Self as XActivityLogClass<Peekable<T>>>::get_possible_class_names()
+            "Start parsing {:}",
+            &class_position_to_name[class_instance - 1]
         );
-        let _class_instance = usize::try_from(read_token!(tokens)?)?;
+
         let section_type = i8::try_from(read_token!(tokens)?)?;
         let domain_type = String::try_from(read_token!(tokens)?)?;
         let title = String::try_from(read_token!(tokens)?)?;
@@ -232,14 +233,16 @@ where
             _ => 0,
         };
         let attachments = deser_vec(tokens, attachments_size, class_position_to_name);
-        let mut unknown_found = false;
         let unknown = match tokens.peek() {
-            Some(Token::Int(_)) | Some(Token::Null) if attachments_found => {
-                unknown_found = true;
+            Some(Token::Int(_)) if attachments_found => {
                 Option::<u64>::try_from(read_token!(tokens)?)?
             }
             _ => None,
         };
+        log::info!(
+            "End of parsing {}",
+            &class_position_to_name[class_instance - 1]
+        );
 
         Ok(Self {
             section_type,
