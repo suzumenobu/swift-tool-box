@@ -29,11 +29,9 @@ fn main() {
 
     match args.output {
         cli::OutputFile::Json(path) => {
-            // let result = deser::deserialize(&mut parser.iter().peekable());
-            let result =
-                deser::Deserializer::new(&mut parser.iter().peekable()).collect::<Vec<_>>();
-            let mut file = File::create(path).unwrap();
-            export::to_json(result, &mut file).unwrap();
+            let mut tokens = parser.iter().peekable();
+            let result = deser::Deserializer::new(&mut tokens);
+            export::to_json(result, &path).unwrap();
         }
         cli::OutputFile::Csv(path) => {
             let mut file = File::create(path).unwrap();

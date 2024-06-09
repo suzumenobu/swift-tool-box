@@ -1,5 +1,7 @@
 use crate::{deser::XActivityLogObject, token::Token};
-use std::io::Write;
+use std::fs::File;
+use std::io::{BufWriter, Write};
+use std::path::PathBuf;
 
 pub fn to_csv(
     tokens: impl IntoIterator<Item = Token>,
@@ -18,8 +20,30 @@ pub fn to_csv(
     Ok(())
 }
 
-pub fn to_json(tokens: Vec<XActivityLogObject>, file: &mut impl Write) -> anyhow::Result<()> {
-    let json_str = serde_json::to_string_pretty(&tokens)?;
-    write!(file, "{}", json_str)?;
+pub fn to_json(
+    tokens: impl IntoIterator<Item = XActivityLogObject>,
+    path: &PathBuf,
+) -> anyhow::Result<()> {
+    let file = File::create(path)?;
+    let mut file = BufWriter::new(file);
+
+    writeln!(file, "{}", "[")?;
+
+    let mut logs = tokens.into_iter().peekable();
+    loop {
+        match logs.peek() {
+            Some(_) => {
+                let json_str = serde_json::to_string_pretty(&logs.next().unwrap())?;
+                if logs.peek().is_some() {
+                    writeln!(file, "{},", json_str)?;
+                } else {
+                    writeln!(file, "{}", json_str)?;
+                }
+            }
+            None => break,
+        }
+    }
+
+    writeln!(file, "{}", "]")?;
     Ok(())
 }
