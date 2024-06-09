@@ -175,7 +175,7 @@ impl TryFrom<Token> for Value {
 
     fn try_from(value: Token) -> Result<Self, Self::Error> {
         match value {
-            Token::Json(ref s) => serde_json::from_str(s).map_err(|err| ConversionError {
+            Token::Json(ref s) => serde_json::from_str(s).map_err(|_| ConversionError {
                 from: "Token",
                 to: "Value",
                 value: format!("{:?}", value.clone()),

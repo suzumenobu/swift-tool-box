@@ -3,7 +3,6 @@
 /// https://github.com/MobileNativeFoundation/XCLogParser/blob/master/docs/Xcactivitylog%20Format.md
 use anyhow::bail;
 use flate2::read::GzDecoder;
-use log;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::Write;
