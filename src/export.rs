@@ -1,4 +1,6 @@
-use crate::{deser::XActivityLogObject, token::Token};
+use serde::Serialize;
+
+use crate::token::Token;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
@@ -19,8 +21,8 @@ pub fn to_csv(tokens: impl IntoIterator<Item = Token>, path: &PathBuf) -> anyhow
     Ok(())
 }
 
-pub fn to_json(
-    tokens: impl IntoIterator<Item = XActivityLogObject>,
+pub fn to_json<S: Serialize>(
+    tokens: impl IntoIterator<Item = S>,
     path: &PathBuf,
 ) -> anyhow::Result<()> {
     let file = File::create(path)?;
