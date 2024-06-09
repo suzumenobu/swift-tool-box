@@ -15,23 +15,38 @@ pub enum XActivityLogObject {
     IDEActivityLogCommandInvocationSection(IDEActivityLogCommandInvocationSection),
 }
 
-pub fn deserialize<T>(tokens: &mut Peekable<T>) -> Vec<XActivityLogObject>
+pub struct Deserializer<'a, T>
 where
     T: Iterator<Item = Token>,
 {
-    let mut class_position_to_name: Vec<String> = Vec::new();
-    let mut result = Vec::new();
-    loop {
-        match _deserialize(tokens, &mut class_position_to_name) {
-            Some(obj) => result.push(obj),
-            None => break,
-        }
-    }
-
-    result
+    tokens: &'a mut Peekable<T>,
+    class_position_to_name: Vec<String>,
 }
 
-pub fn _deserialize<T>(
+impl<'a, T> Deserializer<'a, T>
+where
+    T: Iterator<Item = Token>,
+{
+    pub fn new(tokens: &'a mut Peekable<T>) -> Self {
+        Self {
+            tokens,
+            class_position_to_name: vec![],
+        }
+    }
+}
+
+impl<'a, T> Iterator for Deserializer<'a, T>
+where
+    T: Iterator<Item = Token>,
+{
+    type Item = XActivityLogObject;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        _deserialize(&mut self.tokens, &mut self.class_position_to_name)
+    }
+}
+
+fn _deserialize<T>(
     tokens: &mut Peekable<T>,
     class_position_to_name: &mut Vec<String>,
 ) -> Option<XActivityLogObject>
