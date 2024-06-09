@@ -8,9 +8,11 @@ use std::convert::TryFrom;
 use std::fs::File;
 use std::io::Write;
 use std::io::{self, BufReader, Read};
+use std::path::PathBuf;
 
 use crate::token::Token;
 
+mod cli;
 mod deser;
 mod export;
 mod log_class;
@@ -199,7 +201,7 @@ where
 }
 
 /// Reads a gzipped file
-fn read_gzipped_file(path: &str) -> io::Result<GzDecoder<File>> {
+fn read_gzipped_file(path: &PathBuf) -> io::Result<GzDecoder<File>> {
     let file = File::open(path)?;
     Ok(GzDecoder::new(file))
 }
@@ -207,19 +209,21 @@ fn read_gzipped_file(path: &str) -> io::Result<GzDecoder<File>> {
 fn main() {
     env_logger::init();
 
-    // let res = Utc.timestamp_opt(1.0380436589454135e44 as i64, 0).unwrap();
-    // println!("UTC Start Time: {}", res.to_rfc3339());
+    let args = <cli::Args as clap::Parser>::parse();
 
-    let path = "./static/2.xcactivitylog";
-
-    let contents = read_gzipped_file(path).unwrap();
+    let contents = read_gzipped_file(&args.input).unwrap();
     let mut parser = Parser::new(contents);
 
-    let result = deser::deserialize(&mut parser.iter().peekable());
-    let json_str = serde_json::to_string_pretty(&result).unwrap();
-    let mut file = File::create("result.json").unwrap();
-    write!(file, "{}", json_str).unwrap();
-
-    // let mut file = File::create("result.csv").unwrap();
-    // export::to_csv(parser.iter(), &mut file).unwrap();
+    match args.output {
+        cli::OutputFile::Json(path) => {
+            let result = deser::deserialize(&mut parser.iter().peekable());
+            let json_str = serde_json::to_string_pretty(&result).unwrap();
+            let mut file = File::create(path).unwrap();
+            write!(file, "{}", json_str).unwrap();
+        }
+        cli::OutputFile::Csv(path) => {
+            let mut file = File::create(path).unwrap();
+            export::to_csv(parser.iter(), &mut file).unwrap();
+        }
+    }
 }
