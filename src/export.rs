@@ -1,4 +1,4 @@
-use crate::token::Token;
+use crate::{deser::XActivityLogObject, token::Token};
 use std::io::Write;
 
 pub fn to_csv(
@@ -15,5 +15,11 @@ pub fn to_csv(
             log::debug!("Writter {counter} lines");
         }
     }
+    Ok(())
+}
+
+pub fn to_json(tokens: Vec<XActivityLogObject>, file: &mut impl Write) -> anyhow::Result<()> {
+    let json_str = serde_json::to_string_pretty(&tokens)?;
+    write!(file, "{}", json_str)?;
     Ok(())
 }

@@ -30,9 +30,8 @@ fn main() {
     match args.output {
         cli::OutputFile::Json(path) => {
             let result = deser::deserialize(&mut parser.iter().peekable());
-            let json_str = serde_json::to_string_pretty(&result).unwrap();
             let mut file = File::create(path).unwrap();
-            write!(file, "{}", json_str).unwrap();
+            export::to_json(result, &mut file).unwrap();
         }
         cli::OutputFile::Csv(path) => {
             let mut file = File::create(path).unwrap();
