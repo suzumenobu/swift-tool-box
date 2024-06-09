@@ -1,3 +1,4 @@
+use anyhow::bail;
 use serde_json::Value;
 use std::error::Error;
 use std::fmt;
@@ -298,5 +299,36 @@ impl TryFrom<Token> for Option<i8> {
                 value: format!("{:?}", other),
             }),
         }
+    }
+}
+
+#[derive(Debug)]
+pub enum TokenType {
+    Int,
+    Double,
+    ClassName,
+    ClassInstance,
+    String,
+    Null,
+    Array,
+    Json,
+}
+
+impl TryFrom<char> for TokenType {
+    type Error = anyhow::Error;
+
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        use TokenType::*;
+        Ok(match value {
+            '#' => Int,
+            '^' => Double,
+            '-' => Null,
+            '"' => String,
+            '(' => Array,
+            '%' => ClassName,
+            '@' => ClassInstance,
+            '*' => Json,
+            _ => bail!("Unknown char: {}", value),
+        })
     }
 }

@@ -1,4 +1,4 @@
-use crate::Token;
+use crate::token::Token;
 use std::io::Write;
 
 pub fn to_csv(
