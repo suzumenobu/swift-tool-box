@@ -1,0 +1,21 @@
+#+title: Swift tool box
+#+author: suzumenobu
+
+* Research
+#+begin_src bash :results output
+cat output/result.csv \
+| awk -F ',' '{print $1}' \
+| sort \
+| uniq -c
+#+end_src
+
+#+RESULTS:
+:   69637 array
+:   93633 class_instance
+:       7 class_name
+:   70360 double
+:  287387 int
+:    8068 json
+:  301840 null
+:  307928 string
+:       1 type
