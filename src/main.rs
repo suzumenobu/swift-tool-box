@@ -34,8 +34,7 @@ fn main() {
             export::to_json(result, &path).unwrap();
         }
         cli::OutputFile::Csv(path) => {
-            let mut file = File::create(path).unwrap();
-            export::to_csv(parser.iter(), &mut file).unwrap();
+            export::to_csv(parser.iter(), &path).unwrap();
         }
     }
 }

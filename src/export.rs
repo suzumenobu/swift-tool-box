@@ -3,10 +3,9 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 
-pub fn to_csv(
-    tokens: impl IntoIterator<Item = Token>,
-    file: &mut impl Write,
-) -> anyhow::Result<()> {
+pub fn to_csv(tokens: impl IntoIterator<Item = Token>, path: &PathBuf) -> anyhow::Result<()> {
+    let file = File::create(path)?;
+    let mut file = BufWriter::new(file);
     writeln!(file, "type,value")?;
     let mut counter = 0;
     for token in tokens.into_iter() {
