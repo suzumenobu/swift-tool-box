@@ -22,31 +22,47 @@ where
     let mut class_position_to_name: Vec<String> = Vec::new();
     let mut result = Vec::new();
     loop {
+        match _deserialize(tokens, &mut class_position_to_name) {
+            Some(obj) => result.push(obj),
+            None => break,
+        }
+    }
+
+    result
+}
+
+pub fn _deserialize<T>(
+    tokens: &mut Peekable<T>,
+    class_position_to_name: &mut Vec<String>,
+) -> Option<XActivityLogObject>
+where
+    T: Iterator<Item = Token>,
+{
+    loop {
         let obj = match tokens.peek() {
             Some(Token::ClassInstance(position)) => {
                 let class_name = &class_position_to_name[position - 1];
                 log::debug!("Got instance of {class_name}");
-                match class_name.as_str() {
+                let obj = match class_name.as_str() {
                     "IDECommandLineBuildLog" => XActivityLogObject::IDECommandLineBuildLog(
-                        IDECommandLineBuildLog::from_tokens(tokens, &mut class_position_to_name)
+                        IDECommandLineBuildLog::from_tokens(tokens, class_position_to_name)
                             .unwrap(),
                     ),
                     "IDEActivityLogSection" => XActivityLogObject::IDEActivityLogSection(
-                        IDEActivityLogSection::from_tokens(tokens, &mut class_position_to_name)
-                            .unwrap(),
+                        IDEActivityLogSection::from_tokens(tokens, class_position_to_name).unwrap(),
                     ),
                     "IDEActivityLogCommandInvocationSection" => {
                         XActivityLogObject::IDEActivityLogCommandInvocationSection(
                             IDEActivityLogCommandInvocationSection::from_tokens(
                                 tokens,
-                                &mut class_position_to_name,
+                                class_position_to_name,
                             )
                             .unwrap(),
                         )
                     }
                     "IDEActivityLogMessage" | "IDEDiagnosticActivityLogMessage" => {
                         XActivityLogObject::IDEActivityLogMessage(
-                            IDEActivityLogMessage::from_tokens(tokens, &mut class_position_to_name)
+                            IDEActivityLogMessage::from_tokens(tokens, class_position_to_name)
                                 .unwrap(),
                         )
                     }
@@ -54,7 +70,7 @@ where
                         XActivityLogObject::IDEActivityLogSectionAttachment(
                             IDEActivityLogSectionAttachment::from_tokens(
                                 tokens,
-                                &mut class_position_to_name,
+                                class_position_to_name,
                             )
                             .unwrap(),
                         )
@@ -63,17 +79,17 @@ where
                         XActivityLogObject::IDEActivityLogUnitTestSection(
                             IDEActivityLogUnitTestSection::from_tokens(
                                 tokens,
-                                &mut class_position_to_name,
+                                class_position_to_name,
                             )
                             .unwrap(),
                         )
                     }
                     "DVTDocumentLocation" => XActivityLogObject::DVTDocumentLocation(
-                        DVTDocumentLocation::from_tokens(tokens, &mut class_position_to_name)
-                            .unwrap(),
+                        DVTDocumentLocation::from_tokens(tokens, class_position_to_name).unwrap(),
                     ),
                     s => panic!("Unknwon class instance: {s:?}"),
-                }
+                };
+                Some(obj)
             }
             Some(Token::ClassName(_)) => {
                 let name = tokens.next().unwrap().to_string();
@@ -83,7 +99,7 @@ where
             }
             None => {
                 log::warn!("No more tokens to parse");
-                break;
+                None
             }
             v => {
                 log::warn!("Unknwon value: {v:?}");
@@ -91,8 +107,6 @@ where
                 continue;
             }
         };
-        result.push(obj);
+        return obj;
     }
-
-    result
 }
