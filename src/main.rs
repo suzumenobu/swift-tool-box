@@ -25,6 +25,7 @@ enum TokenType {
     String,
     Null,
     Array,
+    Json,
 }
 
 impl TryFrom<char> for TokenType {
@@ -40,6 +41,7 @@ impl TryFrom<char> for TokenType {
             '(' => Array,
             '%' => ClassName,
             '@' => ClassInstance,
+            '*' => Json,
             _ => bail!("Unknown char: {}", value),
         })
     }
@@ -80,8 +82,12 @@ where
                 // Example: `afd021ebae48c141^`
                 // Left hand side value: A little-endian floating point number, encoded in hexadecimal.
                 TokenType::Double => {
-                    let bytes: [u8; 8] = u64::from_str_radix(&lhs, 16)?.to_le_bytes();
-                    let data: f64 = f64::from_le_bytes(bytes);
+                    let bytes = (0..lhs.len())
+                        .step_by(2)
+                        .filter_map(|i| u8::from_str_radix(&lhs[i..i + 2], 16).ok())
+                        .collect::<Vec<_>>();
+                    let arr: [u8; 8] = bytes.try_into().unwrap();
+                    let data = f64::from_le_bytes(arr);
                     Token::Double(data)
                 }
 
@@ -93,7 +99,6 @@ where
                     let mut buf = vec![0; size];
                     self.contents.read_exact(&mut buf)?;
                     let data = String::from_utf8(buf)?;
-                    log::trace!("Read string: {:?}", data);
                     Token::ClassName(data)
                 }
 
@@ -106,6 +111,7 @@ where
                 // Left hand side value: An `Integer` with the number of characters that are part of the `String`.
                 // Right hand side value: The characters that are part of the `String`
                 TokenType::String => {
+                    log::debug!("Lhs: {lhs}");
                     let size = lhs.parse::<usize>()?;
                     let mut buf = vec![0; size];
                     self.contents.read_exact(&mut buf)?;
@@ -117,6 +123,13 @@ where
                 // Example: `22(`
                 // Left hand side value: An `Integer` with the number of elements that are part of the `Array`.
                 TokenType::Array => Token::Array(lhs.parse::<usize>()?),
+                TokenType::Json => {
+                    let size = lhs.parse::<usize>()?;
+                    let mut buf = vec![0; size];
+                    self.contents.read_exact(&mut buf)?;
+                    let data = String::from_utf8(buf)?;
+                    Token::Json(data)
+                }
 
                 TokenType::Null => bail!("Wrong SLF format. Got Null and some lhs"),
             },
@@ -153,7 +166,10 @@ where
 
     fn iter(&mut self) -> ParserIterator<T> {
         self.scan_header().unwrap();
-        ParserIterator { parser: self }
+        ParserIterator {
+            parser: self,
+            token_idx: 0,
+        }
     }
 }
 
@@ -162,6 +178,7 @@ where
     T: Read,
 {
     parser: &'a mut Parser<T>,
+    token_idx: usize,
 }
 
 impl<'a, T> Iterator for ParserIterator<'a, T>
@@ -171,7 +188,10 @@ where
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.parser.scan_token() {
+        let token = self.parser.scan_token();
+        log::debug!("[{}]: {token:?}", self.token_idx);
+        self.token_idx += 1;
+        match token {
             Ok(t) => Some(t),
             Err(_) => None,
         }
@@ -187,16 +207,19 @@ fn read_gzipped_file(path: &str) -> io::Result<GzDecoder<File>> {
 fn main() {
     env_logger::init();
 
-    let path = "./static/1.xcactivitylog";
+    // let res = Utc.timestamp_opt(1.0380436589454135e44 as i64, 0).unwrap();
+    // println!("UTC Start Time: {}", res.to_rfc3339());
+
+    let path = "./static/2.xcactivitylog";
 
     let contents = read_gzipped_file(path).unwrap();
     let mut parser = Parser::new(contents);
 
-    let result = deser::deserialize(&mut parser.iter());
+    let result = deser::deserialize(&mut parser.iter().peekable());
     let json_str = serde_json::to_string_pretty(&result).unwrap();
     let mut file = File::create("result.json").unwrap();
     write!(file, "{}", json_str).unwrap();
 
-    let mut file = File::create("result.csv").unwrap();
-    export::to_csv(parser.iter(), &mut file).unwrap();
+    // let mut file = File::create("result.csv").unwrap();
+    // export::to_csv(parser.iter(), &mut file).unwrap();
 }
