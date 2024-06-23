@@ -7,7 +7,7 @@ on:
   pull_request:
 
 env:
-  GITHUB_TOKEN: ${{ sercets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   RUST_BACKTRACE: 1
 
 jobs:
