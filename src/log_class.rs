@@ -5,6 +5,7 @@ use serde::Serialize;
 use serde_json::Value;
 use std::error::Error;
 use std::fmt;
+use time::OffsetDateTime;
 
 // Define a custom error type
 #[derive(Debug)]
@@ -107,8 +108,10 @@ pub struct IDECommandLineBuildLog {
     pub domain_type: String,
     pub title: String,
     pub signature: String,
-    pub time_started_recording: f64,
-    pub time_stopped_recording: f64,
+    #[serde(with = "time::serde::iso8601")]
+    pub time_started_recording: OffsetDateTime,
+    #[serde(with = "time::serde::iso8601")]
+    pub time_stopped_recording: OffsetDateTime,
     pub sub_sections: Vec<IDEActivityLogSection>,
 }
 
@@ -129,8 +132,8 @@ where
         let domain_type = String::try_from(read_token!(tokens)?)?;
         let title = String::try_from(read_token!(tokens)?)?;
         let signature = String::try_from(read_token!(tokens)?)?;
-        let time_started_recording = f64::try_from(read_token!(tokens)?)?;
-        let time_stopped_recording = f64::try_from(read_token!(tokens)?)?;
+        let time_started_recording = OffsetDateTime::try_from(read_token!(tokens)?)?;
+        let time_stopped_recording = OffsetDateTime::try_from(read_token!(tokens)?)?;
         let sub_sections_size = Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let sub_sections = deser_vec(tokens, sub_sections_size, class_position_to_name);
         log::info!(
@@ -172,8 +175,10 @@ pub struct IDEActivityLogSection {
     pub domain_type: String,
     pub title: String,
     pub signature: String,
-    pub time_started_recording: f64,
-    pub time_stopped_recording: f64,
+    #[serde(with = "time::serde::iso8601")]
+    pub time_started_recording: OffsetDateTime,
+    #[serde(with = "time::serde::iso8601")]
+    pub time_stopped_recording: OffsetDateTime,
     pub sub_sections: Vec<IDEActivityLogSection>,
     pub text: Option<String>,
     pub messages: Vec<IDEActivityLogMessage>,
@@ -208,8 +213,8 @@ where
         let domain_type = String::try_from(read_token!(tokens)?)?;
         let title = String::try_from(read_token!(tokens)?)?;
         let signature = String::try_from(read_token!(tokens)?)?;
-        let time_started_recording = f64::try_from(read_token!(tokens)?)?;
-        let time_stopped_recording = f64::try_from(read_token!(tokens)?)?;
+        let time_started_recording = OffsetDateTime::try_from(read_token!(tokens)?)?;
+        let time_stopped_recording = OffsetDateTime::try_from(read_token!(tokens)?)?;
         let sub_sections_size = Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let sub_sections = deser_vec(tokens, sub_sections_size, class_position_to_name);
         let text = Option::<String>::try_from(read_token!(tokens)?)?;
@@ -566,8 +571,10 @@ pub struct IDEActivityLogCommandInvocationSection {
     pub domain_type: String,
     pub title: String,
     pub signature: String,
-    pub time_started_recording: f64,
-    pub time_stopped_recording: f64,
+    #[serde(with = "time::serde::iso8601")]
+    pub time_started_recording: OffsetDateTime,
+    #[serde(with = "time::serde::iso8601")]
+    pub time_stopped_recording: OffsetDateTime,
     pub sub_sections: Vec<IDEActivityLogSection>,
     pub text: Option<String>,
     pub messages: Vec<IDEActivityLogMessage>,
@@ -591,8 +598,8 @@ where
         let domain_type = String::try_from(read_token!(tokens)?)?;
         let title = String::try_from(read_token!(tokens)?)?;
         let signature = String::try_from(read_token!(tokens)?)?;
-        let time_started_recording = f64::try_from(read_token!(tokens)?)?;
-        let time_stopped_recording = f64::try_from(read_token!(tokens)?)?;
+        let time_started_recording = OffsetDateTime::try_from(read_token!(tokens)?)?;
+        let time_stopped_recording = OffsetDateTime::try_from(read_token!(tokens)?)?;
         let sub_sections_size = Option::<usize>::try_from(read_token!(tokens)?)?.unwrap_or(0);
         let sub_sections = deser_vec(tokens, sub_sections_size, class_position_to_name);
         let text = Option::<String>::try_from(read_token!(tokens)?)?;

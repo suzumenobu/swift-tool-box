@@ -2,6 +2,7 @@ use anyhow::bail;
 use serde_json::Value;
 use std::error::Error;
 use std::fmt;
+use time::{macros::datetime, Duration, OffsetDateTime};
 
 #[derive(Debug, Clone)]
 pub enum Token {
@@ -184,6 +185,20 @@ impl TryFrom<Token> for Value {
             other => Err(ConversionError {
                 from: "Token",
                 to: "Value",
+                value: format!("{:?}", other),
+            }),
+        }
+    }
+}
+
+impl TryFrom<Token> for OffsetDateTime {
+    type Error = ConversionError;
+    fn try_from(value: Token) -> Result<Self, Self::Error> {
+        match value {
+            Token::Double(v) => Ok(datetime!(2001-01-01 0:00 UTC) + Duration::seconds(v as i64)),
+            other => Err(ConversionError {
+                from: "Token",
+                to: "DateTime<Utc>",
                 value: format!("{:?}", other),
             }),
         }
